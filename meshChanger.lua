@@ -325,7 +325,7 @@ end
 local function convertOverrideMats(overrideMats)
 	local overrideMatsTable = {}
 
-	overrideMats:ForEach(function(index, elem)
+	overrideMats:ForEach(function(_, elem)
 		table.insert(overrideMatsTable, elem:get():ToString())
 	end)
 

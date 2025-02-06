@@ -35,11 +35,11 @@ function StoreCharData(eventType, charName, paramTable)
 	
 	local dataToStore = {}
 	
-	for k, v in pairs(paramTable) do
-		if v then
-			dataToStore[k] = v
+	for key, val in pairs(paramTable) do
+		if key then
+			dataToStore[key] = val
 		else
-			DebugLog(string.format("Provided param: %s is nil, skipping...", k))
+			error(string.format("[UBL] Provided param: %s is nil!\n", key))
 		end
 	end
 	
@@ -55,10 +55,10 @@ function ValidateTypes(expectedTypeTable, parameterTypes)
 		local currentType = parameterTypes[i]:type()
 		
 		if currentType ~= expectedType then
-			error(string.format("Parameter %s is of invalid type! Expected type %s, got type %s\n", i, expectedType, currentType))
+			error(string.format("[UBL] Parameter %s is of invalid type! Expected type %s but got type %s! Please make sure you are using the correct input types for your event parameters!\n", i, expectedType, currentType))
 		end
 	end
-	DebugLog("All parameters are of valid type.")
+	DebugLog("All parameters are of valid type")
 end
 
 function CheckIfDuplicateEntry(charName, eventType)
@@ -73,53 +73,29 @@ end
 local function modifyCDO(interceptedBP, data, event)
 	LoopAsync(5, function()
 		if not interceptedBP or interceptedBP == nil then
-            DebugLog("Blueprint reference is nil. Stopping loop to prevent crash!")
+            DebugLog("Blueprint is nil. Stopping loop to prevent crash!")
             return true
         end
 
 		if not interceptedBP:IsValid() then
-			DebugLog("Blueprint reference is not valid. Stopping loop to prevent crash!")
+			DebugLog("Blueprint is no longer valid. Stopping loop to prevent crash!")
 			return true
 		end
 
-		local succesBp, CDO = pcall(function()
-			return interceptedBP:GetCDO()
-		end)
-
-		if not succesBp or not CDO or CDO == nil then
-            DebugLog("Error getting new CDO. Exiting loop to prevent crash!")
-            return true
-        end
+		local CDO = interceptedBP:GetCDO()
 
 		if not CDO:IsValid() then
 			DebugLog("CDO not available, delaying by 5ms...")
 			return false
 		end
 
-		local success, CDOName = pcall(function()
-			return CDO:GetFName():ToString()
-		end)
-
-        if not success then
-            DebugLog("Error accessing CDO properties. CDO might have been cleared.")
-            return true
-        end
-
-		DebugLog(string.format("CDO: %s", CDOName))
+		DebugLog(string.format("CDO: %s", CDO:GetFName():ToString()))
 			
 		local ehandler = eventHandlers[event]
 		if ehandler then
-
-			local handlerSuccess, error = pcall(function()
-				ehandler(CDO, data, interceptedBP)
-			end)
-
-			if not handlerSuccess then
-				DebugLog(string.format("Error in event handler: %s", error))
-			end
-			
+			ehandler(CDO, data, interceptedBP)
 		else
-			error(string.format("No handler found for event: %s\n", event))
+			error(string.format("[UBL] No handler found for event: %s\n", event))
 		end
 
 		return true
@@ -314,7 +290,7 @@ ExecuteWithDelay(7000, function()
 	DebugLog("Unregistering events...")
 	UnregisterCustomEvent("ChangeBlood")
 	
-	UnregisterCustomEvent("ChangeLightning")
+	UnregisterCustomEvent("ChangeSkinFX")
 	
 	UnregisterCustomEvent("ChangeFace")
 	

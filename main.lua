@@ -1,10 +1,12 @@
 UEHelpers = require("UEHelpers")
 
+local version = 1.00
+
 local debugLogging = true
 local initialSpawnDone = false
 local modsTable = {}
 
-ublplayercontroller = nil
+UBLPlayerController = nil
 
 function DebugLog(msg)
 	if debugLogging then
@@ -22,7 +24,7 @@ local function createModTable(BPModsDir)
 		if not addedMods[modName] then
 			table.insert(modsTable, modName)
 			addedMods[modName] = true
-			DebugLog(string.format("Added mod: %s", modName))
+			print(string.format("[UBL] Added mod: %s\n", modName))
 		end
 	end
 end
@@ -31,11 +33,11 @@ local function initialization()
 	local BPModsDir = IterateGameDirectories().Game.Content.Paks.BPMods
 	
 	if not BPModsDir then
-		ublplayercontroller:SetPropertyValue("abortSpawn", true)
-		error("BPMods directory not found. Please create and populate it with your desired mods.\n")
+		UBLPlayerController:SetPropertyValue("abortSpawn", true)
+		error("[UBL] BPMods directory not found. Please create and populate it with your desired mods.\n")
 	else
 		if #BPModsDir.__files == 0 then
-			ublplayercontroller:SetPropertyValue("abortSpawn", true)
+			UBLPlayerController:SetPropertyValue("abortSpawn", true)
 		else
 			--Populate mod table only for initial spawn
 			if not initialSpawnDone then
@@ -45,7 +47,7 @@ local function initialization()
 			end
 			
 			--Pass detected mods to playerController
-			ublplayercontroller:SetPropertyValue("bpNamesArray", modsTable)
+			UBLPlayerController:SetPropertyValue("bpNamesArray", modsTable)
 		end
 	end
 end
@@ -56,13 +58,15 @@ local function preInit()
 	
 	for _, playerController in pairs(playerControllers) do
 		if playerController:IsValid() and playerController:GetFName():ToString() ~= "Default__UBLPlayerController_C" then
-			ublplayercontroller = playerController
+			UBLPlayerController = playerController
 		end
 	end
 	
-	DebugLog("Current PlayerController: " .. ublplayercontroller:GetFullName())
-	DebugLog("Current World: " .. ublplayercontroller:GetWorld():GetFullName())
+	DebugLog("Current PlayerController: " .. UBLPlayerController:GetFullName())
+	DebugLog("Current World: " .. UBLPlayerController:GetWorld():GetFullName())
 	
+	print(string.format("[UBL] Initializing UBL version: %.2f\n", version))
+
 	initialization()
 end
 
