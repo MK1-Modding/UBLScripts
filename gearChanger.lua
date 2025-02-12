@@ -65,7 +65,7 @@ local function performGenVariableChange(newClass, interceptedBlueprint, target, 
 
     local genVariableComponent
 
-	if target == "Mask" then
+	if target == "MaskClass" then
         genVariableComponent = FindObject(propInstanceComponentClass, interceptedBlueprint, "Mask_GEN_VARIABLE", true)
 
         if not genVariableComponent:IsValid() then
@@ -78,7 +78,7 @@ local function performGenVariableChange(newClass, interceptedBlueprint, target, 
                 return
             end
         end
-    elseif target == "Cowl" then
+    elseif target == "CowlClass" then
         genVariableComponent = FindObject(propInstanceComponentClass, parentBlueprint, "Cowl_GEN_VARIABLE", true)
 
         if not genVariableComponent:IsValid() then
@@ -143,8 +143,10 @@ local function performChange(_, params, interceptedBp)
 	local interceptedBlueprint = interceptedBp
 
     for target, newTable in pairs(params) do
-        if target == "Mask" or
-        target == "Cowl" then
+		DebugLog(string.format("Target: %s", target))
+
+        if target == "MaskClass" or
+        target == "CowlClass" then
             local newClass = newTable[1]
             local charName = newTable[2]
 
@@ -161,114 +163,22 @@ local function performChange(_, params, interceptedBp)
     end
 end
 
-RegisterCustomEvent("ChangeMask", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamNewMask)
+RegisterCustomEvent("ChangeGearMask", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamTargetGear, ParamNewGearMask, ParamNewMaskClass)
 	local charName = ParamCharacterName:get()
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
-	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeMask")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
-	local newMask = ParamNewMask:get()
-	
-	local expectedTypeTable = {
-		charName = "FString",
-		skinName = "FString",
-		palName = "FString",
-		newMask = "FString"
-	}
-	
-	local providedParams = {
-		charName = charName,
-		skinName = skinName,
-		palName = palName,
-		newMask = newMask
-	}
-	
-	ValidateTypes(expectedTypeTable, providedParams)
-	
-	--Adjust charName with skin/pal specifics
-	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
-	
-	--Convert to a standalone table to avoid corruption
-	local passingParameters = {
-		Mask = { 
-            newMask:ToString(),
-            charName:ToString()
-        }
-	}
-	
-	--Store character data
-	StoreCharData("ChangeMask", adjustedCharName, passingParameters)
-end)
-
-RegisterCustomEvent("ChangeCowl", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamNewCowl)
-	local charName = ParamCharacterName:get()
-	local skinName = ParamSkinName:get()
-	local palName = ParamPaletteName:get()
-	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeCowl")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
-    local newCowl = ParamNewCowl:get()
-	
-	local expectedTypeTable = {
-		charName = "FString",
-		skinName = "FString",
-		palName = "FString",
-        newCowl = "FString"
-	}
-	
-	local providedParams = {
-		charName = charName,
-		skinName = skinName,
-		palName = palName,
-        newCowl = newCowl
-	}
-	
-	ValidateTypes(expectedTypeTable, providedParams)
-	
-	--Adjust charName with skin/pal specifics
-	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
-	
-	--Convert to a standalone table to avoid corruption
-	local passingParameters = {
-		Cowl = { 
-            newCowl:ToString(),
-            charName:ToString()
-        }
-	}
-	
-	--Store character data
-	StoreCharData("ChangeCowl", adjustedCharName, passingParameters)
-end)
-
-RegisterCustomEvent("ChangeGearMask", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamTargetGear, ParamNewGearMask)
-	local charName = ParamCharacterName:get()
-	local skinName = ParamSkinName:get()
-	local palName = ParamPaletteName:get()
-	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeGearMask")
-	
-	if (isDuplicateEntry) then
-		return
-	end
 	
     local targetGear = ParamTargetGear:get()
     local newGearMask = ParamNewGearMask:get()
+	local newMaskClass = ParamNewMaskClass:get()
 	
 	local expectedTypeTable = {
 		charName = "FString",
 		skinName = "FString",
 		palName = "FString",
         targetGear = "FString",
-        newGearMask = "FString"
+        newGearMask = "FString",
+		newMaskClass = "FString"
 	}
 	
 	local providedParams = {
@@ -276,46 +186,59 @@ RegisterCustomEvent("ChangeGearMask", function(ParamContext, ParamCharacterName,
 		skinName = skinName,
 		palName = palName,
         targetGear = targetGear,
-        newGearMask = newGearMask
+        newGearMask = newGearMask,
+		newMaskClass = newMaskClass
 	}
 	
 	ValidateTypes(expectedTypeTable, providedParams)
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeGearMask")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
-	local passingParameters = {
-		GearMask = { 
-            targetGear:ToString(),
-            newGearMask:ToString()
-        }
-	}
+	local passingParameters = {}
+
+	--Add mask gear or class to passing params if necessary
+	if targetGear:ToString() ~= "" then
+		passingParameters.GearMask = {
+			targetGear:ToString(),
+			newGearMask:ToString()
+		}
+	end
+
+	if newMaskClass:ToString() ~= "" then
+		passingParameters.MaskClass = {
+			newMaskClass:ToString(),
+			charName:ToString()
+		}
+	end
 	
 	--Store character data
 	StoreCharData("ChangeGearMask", adjustedCharName, passingParameters)
 end)
 
-RegisterCustomEvent("ChangeGearCowl", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamTargetGear, ParamNewGearCowl)
+RegisterCustomEvent("ChangeGearCowl", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamTargetGear, ParamNewGearCowl, ParamNewCowlClass)
 	local charName = ParamCharacterName:get()
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeGearCowl")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
     local targetGear = ParamTargetGear:get()
     local newGearCowl = ParamNewGearCowl:get()
+	local newCowlClass = ParamNewCowlClass:get()
 	
 	local expectedTypeTable = {
 		charName = "FString",
 		skinName = "FString",
 		palName = "FString",
         targetGear = "FString",
-        newGearCowl = "FString"
+        newGearCowl = "FString",
+		newCowlClass = "FString"
 	}
 	
 	local providedParams = {
@@ -323,22 +246,39 @@ RegisterCustomEvent("ChangeGearCowl", function(ParamContext, ParamCharacterName,
 		skinName = skinName,
 		palName = palName,
         targetGear = targetGear,
-        newGearCowl = newGearCowl
+        newGearCowl = newGearCowl,
+		newCowlClass = newCowlClass
 	}
 	
 	ValidateTypes(expectedTypeTable, providedParams)
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeGearMask")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
-	local passingParameters = {
-		GearCowl = { 
-            targetGear:ToString(),
-            newGearCowl:ToString()
-        }
-	}
-	
+	local passingParameters = {}
+
+	--Add cowl gear or class to passing params if necessary
+	if targetGear:ToString() ~= "" then
+		passingParameters.GearCowl = {
+			targetGear:ToString(),
+			newGearCowl:ToString()
+		}
+	end
+
+	if newCowlClass:ToString() ~= "" then
+		passingParameters.CowlClass = {
+			newCowlClass:ToString(),
+			charName:ToString()
+		}
+	end
+
 	--Store character data
 	StoreCharData("ChangeGearCowl", adjustedCharName, passingParameters)
 end)

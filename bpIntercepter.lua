@@ -13,8 +13,6 @@ local eventHandlers = {
 	ChangeHair = require("meshChanger"),
 	ChangeBody = require("meshChanger"),
 	ChangeCloth = require("meshChanger"),
-	ChangeMask = require("gearChanger"),
-	ChangeCowl = require("gearChanger"),
 	ChangeGearMask = require("gearChanger"),
 	ChangeGearCowl = require("gearChanger"),
 	ChangeAnimBlueprint = require("meshChanger"),
@@ -299,10 +297,6 @@ ExecuteWithDelay(7000, function()
 	UnregisterCustomEvent("ChangeBody")
 	
 	UnregisterCustomEvent("ChangeCloth")
-	
-	UnregisterCustomEvent("ChangeMask")
-
-	UnregisterCustomEvent("ChangeCowl")
 
 	UnregisterCustomEvent("ChangeGearMask")
 

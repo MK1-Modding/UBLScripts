@@ -40,12 +40,6 @@ RegisterCustomEvent("ChangeSkinFX", function(ParamContext, ParamCharacterName, P
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeSkinFX")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
 	local skinFX = ParamSkinFXColour:get()
 	
 	local expectedTypeTable = {
@@ -66,6 +60,12 @@ RegisterCustomEvent("ChangeSkinFX", function(ParamContext, ParamCharacterName, P
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeSkinFX")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local safeParams = {

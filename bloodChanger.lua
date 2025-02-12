@@ -80,12 +80,6 @@ RegisterCustomEvent("ChangeBlood", function(ParamContext, ParamCharacterName, Pa
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeBlood")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
 	local bloodColor = ParamBloodColor:get()
 	local bloodColorGameplay = ParamBloodColorGameplay:get()
 	local SDF_SSColor = ParamSDF_SSColor:get()
@@ -115,6 +109,12 @@ RegisterCustomEvent("ChangeBlood", function(ParamContext, ParamCharacterName, Pa
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeBlood")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {

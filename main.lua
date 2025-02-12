@@ -64,8 +64,6 @@ local function preInit()
 	
 	DebugLog("Current PlayerController: " .. UBLPlayerController:GetFullName())
 	DebugLog("Current World: " .. UBLPlayerController:GetWorld():GetFullName())
-	
-	print(string.format("[UBL] Initializing UBL version: %.2f\n", version))
 
 	initialization()
 end
@@ -73,3 +71,5 @@ end
 RegisterCustomEvent("LoadBlueprints", function()
 	preInit()
 end)
+
+print(string.format("[UBL] Initializing UBL version: %.2f\n", version))

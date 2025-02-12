@@ -337,12 +337,6 @@ RegisterCustomEvent("ChangeFace", function(ParamContext, ParamCharacterName, Par
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeFace")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
 	local newFace = ParamNewFace:get()
 	
 	local expectedTypeTable = {
@@ -363,6 +357,12 @@ RegisterCustomEvent("ChangeFace", function(ParamContext, ParamCharacterName, Par
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(AdjustCharName, "ChangeFace")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
@@ -377,12 +377,6 @@ RegisterCustomEvent("ChangeHair", function(ParamContext, ParamCharacterName, Par
 	local charName = ParamCharacterName:get()
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
-	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeHair")
-	
-	if (isDuplicateEntry) then
-		return
-	end
 	
 	local newHair = ParamNewHair:get()
 	
@@ -404,6 +398,12 @@ RegisterCustomEvent("ChangeHair", function(ParamContext, ParamCharacterName, Par
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeHair")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
@@ -418,12 +418,6 @@ RegisterCustomEvent("ChangeBody", function(ParamContext, ParamCharacterName, Par
 	local charName = ParamCharacterName:get()
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
-	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeBody")
-	
-	if (isDuplicateEntry) then
-		return
-	end
 	
 	local newBody = ParamNewBody:get()
 	
@@ -445,6 +439,12 @@ RegisterCustomEvent("ChangeBody", function(ParamContext, ParamCharacterName, Par
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeBody")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
@@ -455,25 +455,19 @@ RegisterCustomEvent("ChangeBody", function(ParamContext, ParamCharacterName, Par
 	StoreCharData("ChangeBody", adjustedCharName, passingParameters)
 end)
 
-RegisterCustomEvent("ChangeCloth", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamNewHavokCloth, ParamNewClothMesh)
+RegisterCustomEvent("ChangeCloth", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamNewHavokAsset, ParamNewClothMesh)
 	local charName = ParamCharacterName:get()
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeCloth")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
-	local newHavokCloth = ParamNewHavokCloth:get()
+	local newHavokAsset = ParamNewHavokAsset:get()
 	local newClothMesh = ParamNewClothMesh:get()
 	
 	local expectedTypeTable = {
 		charName = "FString",
 		skinName = "FString",
 		palName = "FString",
-		newHavokCloth = "FString",
+		newHavokAsset = "FString",
 		newClothMesh = "FString"
 	}
 	
@@ -481,7 +475,7 @@ RegisterCustomEvent("ChangeCloth", function(ParamContext, ParamCharacterName, Pa
 		charName = charName,
 		skinName = skinName,
 		palName = palName,
-		newHavokCloth = newHavokCloth,
+		newHavokAsset = newHavokAsset,
 		newClothMesh = newClothMesh
 	}
 	
@@ -489,10 +483,16 @@ RegisterCustomEvent("ChangeCloth", function(ParamContext, ParamCharacterName, Pa
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeCloth")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
-		HavokCloth = { newHavokCloth:ToString() },
+		HavokCloth = { newHavokAsset:ToString() },
 		ClothMesh = { newClothMesh:ToString() }
 	}
 	
@@ -504,12 +504,6 @@ RegisterCustomEvent("ChangeAnimBlueprint", function(ParamContext, ParamCharacter
 	local charName = ParamCharacterName:get()
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
-	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeAnimBlueprint")
-	
-	if (isDuplicateEntry) then
-		return
-	end
 	
 	local newAnimBlueprint = ParamNewAnimBlueprint:get()
 	
@@ -531,6 +525,12 @@ RegisterCustomEvent("ChangeAnimBlueprint", function(ParamContext, ParamCharacter
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeAnimBlueprint")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
@@ -546,12 +546,6 @@ RegisterCustomEvent("ChangeFaceOverrideMaterials", function(ParamContext, ParamC
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeFaceOverrideMaterials")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
 	local overrideMats = ParamOverrideMaterials:get()
 	
 	local expectedTypeTable = {
@@ -574,6 +568,12 @@ RegisterCustomEvent("ChangeFaceOverrideMaterials", function(ParamContext, ParamC
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeFaceOverrideMaterials")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
@@ -589,12 +589,6 @@ RegisterCustomEvent("ChangeBodyOverrideMaterials", function(ParamContext, ParamC
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeBodyOverrideMaterials")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
 	local overrideMats = ParamOverrideMaterials:get()
 	
 	local expectedTypeTable = {
@@ -617,6 +611,12 @@ RegisterCustomEvent("ChangeBodyOverrideMaterials", function(ParamContext, ParamC
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeBodyOverrideMaterials")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
@@ -632,12 +632,6 @@ RegisterCustomEvent("ChangeHairOverrideMaterials", function(ParamContext, ParamC
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeHairOverrideMaterials")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
 	local overrideMats = ParamOverrideMaterials:get()
 	
 	local expectedTypeTable = {
@@ -660,6 +654,12 @@ RegisterCustomEvent("ChangeHairOverrideMaterials", function(ParamContext, ParamC
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeHairOverrideMaterials")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
@@ -675,12 +675,6 @@ RegisterCustomEvent("ChangeClothOverrideMaterials", function(ParamContext, Param
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeClothOverrideMaterials")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
 	local overrideMats = ParamOverrideMaterials:get()
 	
 	local expectedTypeTable = {
@@ -703,6 +697,12 @@ RegisterCustomEvent("ChangeClothOverrideMaterials", function(ParamContext, Param
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeClothOverrideMaterials")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {

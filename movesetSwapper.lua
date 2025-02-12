@@ -32,12 +32,6 @@ RegisterCustomEvent("ChangeMoveset", function(ParamContext, ParamCharacterName, 
 	local skinName = ParamSkinName:get()
 	local palName = ParamPaletteName:get()
 	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeMoveset")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
 	local newMoveset = ParamNewMoveset:get()
 	
 	local expectedTypeTable = {
@@ -58,6 +52,12 @@ RegisterCustomEvent("ChangeMoveset", function(ParamContext, ParamCharacterName, 
 	
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeMoveset")
+	
+	if (isDuplicateEntry) then
+		return
+	end
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
