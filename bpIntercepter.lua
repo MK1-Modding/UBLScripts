@@ -134,7 +134,7 @@ local function matchPalette(bpName, callback)
 			--DebugLog(string.format("Matched %s with %s", bpName, skinBpName))
 			local triesBeforeGivingUp = 0;
 
-			LoopAsync(50, function()
+			LoopAsync(15, function()
 				--Find palette bp object
 				local paletteBp = FindObject("BlueprintGeneratedClass", paletteBpName)
 				
@@ -145,10 +145,11 @@ local function matchPalette(bpName, callback)
 				end
 
 				--Stop the loop if not found after 20 tries
-				if triesBeforeGivingUp ~= 20 then
+				if triesBeforeGivingUp ~= 10 then
 					triesBeforeGivingUp = triesBeforeGivingUp + 1
 					return false
 				else
+					callback(false, nil)
 					return true
 				end
 			end)
@@ -214,7 +215,6 @@ local function matchBlueprintNames(interceptedBp)
 			if paletteMatch then
 				matchedEvents = runEvents(charName, interceptedBp, matchedEvents)
 			end
-		
 
 			--Match for skin pattern next
 			matchSkin(bpName, function(skinMatch, charName)

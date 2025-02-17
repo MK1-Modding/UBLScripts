@@ -5,7 +5,11 @@ local function changePropClass(genVariableComponent, newBlueprintClass)
 	if propClass:IsValid() then
 		genVariableComponent:SetPropertyValue("PropClass", newBlueprintClass)
 		
-		DebugLog(string.format("Successfully set the new prop class for: %s to be %s!", genVariableComponent:GetFName():ToString(), newBlueprintClass:GetFName():ToString()))
+		if newBlueprintClass ~= FName("None") then
+			DebugLog(string.format("Successfully set the new prop class for: %s to be %s!", genVariableComponent:GetFName():ToString(), newBlueprintClass:GetFName():ToString()))
+		else
+			DebugLog(string.format("Successfully set the new prop class for: %s to be 'None'!", genVariableComponent:GetFName():ToString()))
+		end
 	else
 		error("[UBL] Retrieved prop class property is not valid! This should not be happening!\n")
 	end
@@ -15,21 +19,14 @@ local function changeGear(gearCDO, newGearBp, target)
     local classOverridesProperty = gearCDO:GetPropertyValue("ClassOverrides")
 
     if classOverridesProperty:IsValid() then
-        if newGearBp then
-            classOverridesProperty:ForEach(function(_, elem)
-                if (target == "GearMask" and elem:get().Key:ToString() == "Mask") or 
-                (target == "GearCowl" and elem:get().Key:ToString() == "Cowl") then
-                        --Set elem value to new gear bp
-                        elem:get().Value = newGearBp
-                        DebugLog(string.format("Successfully set new gear blueprint for: %s!", gearCDO:GetFName():ToString()))
-                end
-            end)
-        else
-            local emptyTable = {}
-
-            --Set it to empty table to clear it out
-            gearCDO:SetPropertyValue("ClassOverrides", emptyTable)
-        end
+		classOverridesProperty:ForEach(function(_, elem)
+			if (target == "GearMask" and elem:get().Key:ToString() == "Mask") or 
+			(target == "GearCowl" and elem:get().Key:ToString() == "Cowl") then
+					--Set elem value to new gear bp
+					elem:get().Value = newGearBp
+					DebugLog(string.format("Successfully set new gear blueprint for: %s!", gearCDO:GetFName():ToString()))
+			end
+		end)
 
         DebugLog(string.format("Successfully set the new gear for: %s!", gearCDO:GetFName():ToString()))
     else
@@ -46,10 +43,16 @@ local function performGenVariableChange(newClass, interceptedBlueprint, target, 
 	end
 
 	--Find provided blueprint class
-	DebugLog(string.format("Looking for provided blueprint class: %s...", newClass))
-	local newBlueprintClass = FindObject("BlueprintGeneratedClass", newClass)
+	local newBlueprintClass
 
-	if not newBlueprintClass:IsValid() then
+	if newClass ~= "None" then
+		DebugLog(string.format("Looking for provided blueprint class: %s...", newClass))
+		newBlueprintClass = FindObject("BlueprintGeneratedClass", newClass)
+	else
+		newBlueprintClass = FName("None")
+	end
+
+	if newClass ~= "None" and not newBlueprintClass:IsValid() then
 		error("[UBL] Provided blueprint class is not a valid class! Make sure the blueprint class is loaded in by using the loadAssets function!\n")
 	end
 
@@ -130,7 +133,7 @@ local function performGearChange(targetGear, newGear, target)
             DebugLog(string.format("Set newGearBp to: %s!", newGearBp:GetFName():ToString()))
         else
             --Set it to nothing
-            newGearBp = nil
+            newGearBp = FName("None")
         end
 
         --Proceed to gear change if all is good

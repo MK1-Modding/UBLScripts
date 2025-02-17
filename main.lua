@@ -1,6 +1,6 @@
 UEHelpers = require("UEHelpers")
 
-local version = 1.00
+local version = "1.0.0"
 
 local debugLogging = true
 local initialSpawnDone = false
@@ -72,4 +72,4 @@ RegisterCustomEvent("LoadBlueprints", function()
 	preInit()
 end)
 
-print(string.format("[UBL] Initializing UBL version: %.2f\n", version))
+print(string.format("[UBL] Initializing UBL version: %s\n", version))

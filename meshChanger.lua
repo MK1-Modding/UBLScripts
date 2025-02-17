@@ -5,7 +5,7 @@ local function changeSkeletalMesh(meshComponent, newSkeletalMesh)
 	if sm:IsValid() then
 		meshComponent:SetPropertyValue("SkeletalMesh", newSkeletalMesh)
 		
-		if newSkeletalMesh then
+		if newSkeletalMesh ~= FName("None") then
 			DebugLog(string.format("Successfully set the new skeletalMesh for: %s to be %s!", meshComponent:GetFName():ToString(), newSkeletalMesh:GetFName():ToString()))
 		else
 			DebugLog(string.format("Successfully set the new skeletalMesh for: %s to be 'None'!", meshComponent:GetFName():ToString()))
@@ -22,7 +22,11 @@ local function changeAnimBlueprint(primaryMeshComponent, animClass)
 	if animClassProperty:IsValid() then
 		primaryMeshComponent:SetPropertyValue("AnimClass", animClass)
 		
-		DebugLog(string.format("Successfully set the new anim class for: %s to be %s!", primaryMeshComponent:GetFName():ToString(), animClass:GetFName():ToString()))
+		if animClass ~= FName("None") then
+			DebugLog(string.format("Successfully set the new anim class for: %s to be %s!", primaryMeshComponent:GetFName():ToString(), animClass:GetFName():ToString()))
+		else
+			DebugLog(string.format("Successfully set the new anim class for: %s to be 'None'!", primaryMeshComponent:GetFName():ToString()))
+		end
 	else
 		error("Retrieved anim class property is not valid!\n")
 	end
@@ -35,7 +39,11 @@ local function changeHavokCloth(havokClothComponent, newHavokClothAsset)
 	if clothAsset:IsValid() then
 		havokClothComponent:SetPropertyValue("ClothAsset", newHavokClothAsset)
 		
-		DebugLog(string.format("Successfully set the new havok cloth asset for: %s to be %s!", havokClothComponent:GetFName():ToString(), newHavokClothAsset:GetFName():ToString()))
+		if newHavokClothAsset ~= FName("None") then
+			DebugLog(string.format("Successfully set the new havok cloth asset for: %s to be %s!", havokClothComponent:GetFName():ToString(), newHavokClothAsset:GetFName():ToString()))
+		else
+			DebugLog(string.format("Successfully set the new havok cloth asset for: %s to be 'None'!", havokClothComponent:GetFName():ToString()))
+		end
 	else
 		error("Retrieved cloth asset property is not valid!\n")
 	end
@@ -63,9 +71,8 @@ local function changeOverrideMaterials(meshComponent, newOverrideMaterialsTable)
 						table.insert(newOverrideMats, matInstance)
 					end
 				else
-					table.insert(newOverrideMats, nil)
+					table.insert(newOverrideMats, FName("None"))
 				end
-
 			end
 		end
 
@@ -97,7 +104,7 @@ end
 	return false
 end]]
 
-local function performAnimBlueprintChange(newMesh, CDO)
+local function performAnimBlueprintChange(newAnimClass, CDO)
 	local meshClass = StaticFindObject("/Script/HierarchicalAnimation.HierarchicalSkeletalMeshComponent")
 	
 	if not meshClass:IsValid() then
@@ -114,14 +121,23 @@ local function performAnimBlueprintChange(newMesh, CDO)
 	--DebugLog(string.format("PrimaryMeshComponent: %s is valid.", primaryMeshComponent:GetFName():ToString()))
 	
 	--Look for new anim blueprint class
-	local newAnimClass = FindObject("AnimBlueprintGeneratedClass", newMesh)
+	local newAnimBpClass
 	
-	if not newAnimClass:IsValid() then
+	if newAnimBpClass ~= "None" then
+		DebugLog(string.format("Looking for new anim class: %s...", newAnimClass))
+		newAnimBpClass = FindObject("AnimBlueprintGeneratedClass", newAnimClass)
+	else
+		DebugLog("Setting anim class to 'None'")
+		newAnimBpClass = FName("None")
+	end
+
+	
+	if newAnimClass ~= "None" and not newAnimBpClass:IsValid() then
 		error("[UBL] Retrieved anim class is not valid! Please make sure you are loading in the anim class beforehand (or load in the character blueprint itself)\n")
 	end
 	
 	--Perform anim class change
-	changeAnimBlueprint(primaryMeshComponent, newAnimClass)
+	changeAnimBlueprint(primaryMeshComponent, newAnimBpClass)
 end
 
 local function performHavokClothAssetChange(newMesh, interceptedBlueprint)
@@ -139,7 +155,7 @@ local function performHavokClothAssetChange(newMesh, interceptedBlueprint)
 		newHavokClothAsset = FindObject("HavokClothAsset", newMesh)
 	else
 		DebugLog("Setting havok cloth asset to 'None'")
-		newHavokClothAsset = nil
+		newHavokClothAsset = FName("None")
 	end
 	
 	if newMesh ~= "None" and not newHavokClothAsset:IsValid() then
@@ -175,7 +191,7 @@ local function performClothAssetChange(newMesh, interceptedBlueprint)
 		newClothAsset = FindObject("SkeletalMesh", newMesh)
 	else
 		DebugLog("Setting cloth asset to 'None'")
-		newClothAsset = nil
+		newClothAsset = FName("None")
 	end
 	
 	if newMesh ~= "None" and not newClothAsset:IsValid() then
@@ -217,7 +233,7 @@ local function performMeshChange(newMesh, targetMesh, interceptedBlueprint, curr
 		newSkeletalMesh = FindObject("SkeletalMesh", newMesh)
 	else
 		DebugLog("Setting mesh to 'None'")
-		newSkeletalMesh = nil
+		newSkeletalMesh = FName("None")
 	end
 	
 	if newMesh ~= "None" and not newSkeletalMesh:IsValid() then
