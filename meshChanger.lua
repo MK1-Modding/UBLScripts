@@ -63,7 +63,15 @@ local function changeOverrideMaterials(meshComponent, newOverrideMaterialsTable)
 			for _, mat in pairs(newOverrideMaterialsTable) do
 				--Check if value of none is provided
 				if mat ~= "None" then
-					local matInstance = FindObject("MaterialInstanceConstant", mat)
+					local matClass = StaticFindObject("/Script/Engine.MaterialInstanceConstant")
+
+					if not matClass:IsValid() then
+						error("Mat class is not valid! This should not be happening!")
+					end
+
+					local matInstance = FindObject(matClass, nil, mat, true)
+
+					--DebugLog(string.format("Mat name: %s, mat full path: %s", matInstance:GetFName():ToString(), matInstance:GetFullName()))
 
 					if not matInstance:IsValid() then
 						print(string.format("Material: %s is not valid! Make sure you are loading it through the loadAssets function beforehand!", mat))

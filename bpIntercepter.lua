@@ -132,7 +132,7 @@ local function matchPalette(bpName, callback)
 		--Match skin name and check palette validity
 		if string.find(bpName, skinBpName) then
 			--DebugLog(string.format("Matched %s with %s", bpName, skinBpName))
-			local triesBeforeGivingUp = 0;
+			local triesBeforeGivingUp = 0
 
 			LoopAsync(15, function()
 				--Find palette bp object
@@ -144,7 +144,7 @@ local function matchPalette(bpName, callback)
 					return true
 				end
 
-				--Stop the loop if not found after 20 tries
+				--Stop the loop if not found after 10 tries
 				if triesBeforeGivingUp ~= 10 then
 					triesBeforeGivingUp = triesBeforeGivingUp + 1
 					return false
