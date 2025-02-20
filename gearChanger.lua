@@ -96,50 +96,87 @@ local function performGenVariableChange(newClass, interceptedBlueprint, target, 
 	changePropClass(genVariableComponent, newBlueprintClass)
 end
 
+local function waitForGearCDO(gearBpClass, callback)
+	LoopAsync(5, function()
+
+		if not gearBpClass:IsValid() then
+			callback(false)
+			return true
+		end
+
+		local gearCDO = gearBpClass:GetCDO()
+
+		if not gearCDO:IsValid() then
+			DebugLog("Gear CDO not valid! Delaying...")
+			return false
+		end
+
+		callback(true, gearCDO)
+		return true
+	end)
+end
+
+local function performOnceGearLoaded(gearBpClass, newGear, target)
+	local gearCDO = gearBpClass:GetCDO()
+
+	if not gearCDO:IsValid() then
+		DebugLog("Gear CDO not valid! Delaying...")
+
+		waitForGearCDO(gearBpClass, function(isValid, gearCDO)
+			if isValid then
+				local newGearBp
+
+				if newGear ~= "None" then
+					newGearBp = FindObject("BlueprintGeneratedClass", newGear)
+			
+					if not newGearBp:IsValid() then
+						error(string.format("[UBL] Specified gear blueprint: %s is not valid! Please make sure you are specifying a valid gear blueprint, refer to the documentation for more information!", newGear))
+					end
+			
+					DebugLog(string.format("Set newGearBp to: %s!", newGearBp:GetFName():ToString()))
+				else
+					--Set it to nothing
+					newGearBp = FName("None")
+				end
+			
+				--Proceed to gear change if all is good
+				changeGear(gearCDO, newGearBp, target)
+				return true
+			end
+		end)
+	else
+		local newGearBp
+
+		if newGear ~= "None" then
+			newGearBp = FindObject("BlueprintGeneratedClass", newGear)
+	
+			if not newGearBp:IsValid() then
+				error(string.format("[UBL] Specified gear blueprint: %s is not valid! Please make sure you are specifying a valid gear blueprint, refer to the documentation for more information!", newGear))
+			end
+	
+			DebugLog(string.format("Set newGearBp to: %s!", newGearBp:GetFName():ToString()))
+		else
+			--Set it to nothing
+			newGearBp = FName("None")
+		end
+	
+		--Proceed to gear change if all is good
+		changeGear(gearCDO, newGearBp, target)
+		return true
+	end
+end
+
 local function performGearChange(targetGear, newGear, target)
-    local gearBpClass
+    local gearBpClass = FindObject("BlueprintGeneratedClass", targetGear)
 
-    local triesBeforeGivingUp = 0
+	if gearBpClass:IsValid() then
+		performOnceGearLoaded(gearBpClass, newGear, target)
+		return
+	end
 
-    LoopAsync(50, function()
-        gearBpClass = FindObject("BlueprintGeneratedClass", targetGear)
-
-        if not gearBpClass:IsValid() then
-            if triesBeforeGivingUp < 5 then
-                DebugLog("Gear bp still not spawned, waiting...")
-                triesBeforeGivingUp = triesBeforeGivingUp + 1
-                return false
-            else
-                DebugLog(string.format("[UBL] Provided target gear: %s not spawned/not valid, if you are expecting a gear change make sure you are specifying the correct gear blueprint along with _C at the end!", targetGear))
-                return true
-            end
-        end
-
-        local gearCDO = gearBpClass:GetCDO()
-
-        if not gearCDO:IsValid() then
-            error("Gear CDO not valid! Shit...")
-        end
-    
-        local newGearBp
-    
-        if newGear ~= "None" then
-            newGearBp = FindObject("BlueprintGeneratedClass", newGear)
-    
-            if not newGearBp:IsValid() then
-                error(string.format("[UBL] Specified gear blueprint: %s is not valid! Please make sure you are specifying a valid gear blueprint, refer to the documentation for more information!", newGear))
-            end
-
-            DebugLog(string.format("Set newGearBp to: %s!", newGearBp:GetFName():ToString()))
-        else
-            --Set it to nothing
-            newGearBp = FName("None")
-        end
-
-        --Proceed to gear change if all is good
-        changeGear(gearCDO, newGearBp, target)
-        return true
-    end)
+	WaitingBlueprintAssets[targetGear] = function(loadedGearBp)
+		performOnceGearLoaded(loadedGearBp, newGear, target)
+	end
 end
 
 local function performChange(_, params, interceptedBp)
@@ -258,7 +295,7 @@ RegisterCustomEvent("ChangeGearCowl", function(ParamContext, ParamCharacterName,
 	--Adjust charName with skin/pal specifics
 	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
 
-	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeGearMask")
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeGearCowl")
 	
 	if (isDuplicateEntry) then
 		return

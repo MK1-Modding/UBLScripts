@@ -2,6 +2,7 @@ local charDataTable = {}
 local palPatterns = {}
 local skinPatterns = {}
 local generalPatterns = {}
+WaitingBlueprintAssets = {}
 local patternsCreated = false
 
 local assetTable = require("assetLoader")
@@ -132,30 +133,28 @@ local function matchPalette(bpName, callback)
 		--Match skin name and check palette validity
 		if string.find(bpName, skinBpName) then
 			--DebugLog(string.format("Matched %s with %s", bpName, skinBpName))
-			local triesBeforeGivingUp = 0
 
-			LoopAsync(15, function()
-				--Find palette bp object
-				local paletteBp = FindObject("BlueprintGeneratedClass", paletteBpName)
-				
-				if paletteBp:IsValid() then
-					--DebugLog(string.format("Intercepted blueprint: %s matches targeted palette skin: %s", bpName, pattern))
+			--Find palette bp object
+			local paletteBp = FindObject("BlueprintGeneratedClass", paletteBpName)
+
+			if paletteBp:IsValid() then
+				callback(true, charName)
+				return
+			end
+
+			WaitingBlueprintAssets[paletteBpName] = function(paletteBlueprint)
+				if paletteBlueprint:IsValid() then
 					callback(true, charName)
-					return true
-				end
-
-				--Stop the loop if not found after 10 tries
-				if triesBeforeGivingUp ~= 10 then
-					triesBeforeGivingUp = triesBeforeGivingUp + 1
-					return false
 				else
 					callback(false, nil)
-					return true
 				end
-			end)
+			end
+			
 			return
 		end
 	end
+
+	-- If no match was found, return false
 	callback(false, nil)
 end
 
@@ -204,33 +203,30 @@ end
 local function matchBlueprintNames(interceptedBp)
 	local bpName = interceptedBp:GetFName():ToString()
 
-	--Basic character blueprint check
-	if string.find(bpName, "_Char_C") then
-		local matchedEvents = {}
+	local matchedEvents = {}
 
-		--DebugLog(string.format("Intercepted blueprint: %s for character: %s" , bpName, charName))
+	--DebugLog(string.format("Intercepted blueprint: %s for character: %s" , bpName, charName))
 
-		--Check for palette matching first
-		matchPalette(bpName, function(paletteMatch, charName)
-			if paletteMatch then
+	--Check for palette matching first
+	matchPalette(bpName, function(paletteMatch, charName)
+		if paletteMatch then
+			matchedEvents = runEvents(charName, interceptedBp, matchedEvents)
+		end
+
+		--Match for skin pattern next
+		matchSkin(bpName, function(skinMatch, charName)
+			if skinMatch then
 				matchedEvents = runEvents(charName, interceptedBp, matchedEvents)
 			end
-
-			--Match for skin pattern next
-			matchSkin(bpName, function(skinMatch, charName)
-				if skinMatch then
+					
+			--Match for general pattern last
+			matchGeneral(bpName, function(generalMatch, charName)
+				if generalMatch then
 					matchedEvents = runEvents(charName, interceptedBp, matchedEvents)
 				end
-						
-				--Match for general pattern last
-				matchGeneral(bpName, function(generalMatch, charName)
-					if generalMatch then
-						matchedEvents = runEvents(charName, interceptedBp, matchedEvents)
-					end
-				end)
 			end)
 		end)
-	end
+	end)
 end
 
 function AdjustCharName(charName, skinName, palName)
@@ -266,22 +262,7 @@ local function loadAssets()
 	DebugLog("Setting needsLoading property...")
 end
 
-NotifyOnNewObject("/Script/Engine.BlueprintGeneratedClass", function(interceptedBP)
-	--Initial check for empty charDataTable
-	if not next(charDataTable) then
-		return
-	end
-	
-	--Populate patterns if needed
-	if not patternsCreated then
-		populateBlueprintPatterns()
-	end
-
-	--Call bp names matcher func
-	matchBlueprintNames(interceptedBP)
-end)
-
-ExecuteWithDelay(7000, function()
+local function registerStuff()
 	loadAssets()
 	
 	--Unregister events that should no longer be registered
@@ -320,4 +301,31 @@ ExecuteWithDelay(7000, function()
 	
 	UnregisterCustomEvent("LoadAssets")
 	DebugLog("Successfully unregistered all events")
+end
+
+NotifyOnNewObject("/Script/Engine.BlueprintGeneratedClass", function(interceptedBP)
+	--Initial check for empty charDataTable
+	if not next(charDataTable) then
+		return
+	end
+	
+	--Populate patterns if needed
+	if not patternsCreated then
+		populateBlueprintPatterns()
+
+		registerStuff()
+	end
+
+	--Basic character blueprint check
+	if string.find(interceptedBP:GetFName():ToString(), "_Char_C") then
+		--Call bp names matcher func
+		matchBlueprintNames(interceptedBP)
+	elseif WaitingBlueprintAssets[interceptedBP:GetFName():ToString()] then
+		DebugLog(string.format("Palette blueprint spawned!"))
+
+		WaitingBlueprintAssets[interceptedBP:GetFName():ToString()](interceptedBP)
+
+		--Clear the asset
+		WaitingBlueprintAssets[interceptedBP:GetFName():ToString()] = nil
+	end
 end)
