@@ -5,25 +5,77 @@ local generalPatterns = {}
 WaitingBlueprintAssets = {}
 local patternsCreated = false
 
-local assetTable = require("assetLoader")
+local assetTables = require("assetLoader")
 
 local eventHandlers = {
-	ChangeBlood = require("bloodChanger"),
-	ChangeSkinFX = require("skinFXChanger"),
-	ChangeFace = require("meshChanger"),
-	ChangeHair = require("meshChanger"),
-	ChangeBody = require("meshChanger"),
-	ChangeCloth = require("meshChanger"),
-	ChangeGearMask = require("gearChanger"),
-	ChangeGearCowl = require("gearChanger"),
-	ChangeAnimBlueprint = require("meshChanger"),
-	ChangeFaceOverrideMaterials = require("meshChanger"),
-	ChangeBodyOverrideMaterials = require("meshChanger"),
-	ChangeHairOverrideMaterials = require("meshChanger"),
-	ChangeClothOverrideMaterials = require("meshChanger"),
-	ChangeVoice = require("soundChanger"),
-	ChangeGrunts = require("soundChanger"),
-	ChangeMoveset = require("movesetSwapper")
+	ChangeBlood = { 
+		Event = require("events.miscellaneous"),
+		Handler = require("bloodChanger")
+	},
+	ChangeSkinFX = {
+		Event = require("events.miscellaneous"),
+		Handler = require("skinFXChanger")
+	},
+	ChangeFace = {
+		Event = require("events.mesh"),
+		Handler = require("eventHandler")
+	},
+	ChangeHair = {
+		Event = require("events.mesh"),
+		Handler = require("eventHandler")
+	},
+	ChangeBody = {
+		Event = require("events.mesh"),
+		Handler = require("eventHandler")
+	},
+	ChangeCloth = {
+		Event = require("events.mesh"),
+		Handler = require("eventHandler")
+	},
+	ChangeGearMask = {
+		Event = require("events.gear"),
+		Handler = require("gearChanger")
+	},
+	ChangeGearCowl = {
+		Event = require("events.gear"),
+		Handler = require("gearChanger")
+	},
+	ChangeAnimBlueprint = {
+		Event = require("events.animBlueprint"),
+		require("eventHandler")
+	},
+	ChangeFaceOverrideMaterials = {
+		Event = require("events.overrideMaterials"),
+		Handler = require("eventHandler")
+	},
+	ChangeBodyOverrideMaterials = {
+		Event = require("events.overrideMaterials"),
+		Handler = require("eventHandler")
+	},
+	ChangeHairOverrideMaterials = {
+		Event = require("events.overrideMaterials"),
+		Handler = require("eventHandler")
+	},
+	ChangeClothOverrideMaterials = {
+		Event = require("events.overrideMaterials"),
+		Handler = require("eventHandler")
+	},
+	ChangeFacialAnims = {
+		Event = require("events.anims"),
+		Handler = require("eventHandler")
+	},
+	ChangeVoice = {
+		Event = require("events.sounds"),
+		Handler = require("soundChanger")
+	},
+	ChangeGrunts = {
+		Event = require("events.sounds"),
+		Handler = require("soundChanger")
+	},
+	ChangeMoveset = {
+		Event = require("events.miscellaneous"),
+		Handler = require("movesetSwapper")
+	}
 }
 
 function StoreCharData(eventType, charName, paramTable)
@@ -90,7 +142,7 @@ local function modifyCDO(interceptedBP, data, event)
 
 		DebugLog(string.format("CDO: %s", CDO:GetFName():ToString()))
 			
-		local ehandler = eventHandlers[event]
+		local ehandler = eventHandlers[event]["Handler"]
 		if ehandler then
 			ehandler(CDO, data, interceptedBP)
 		else
@@ -244,22 +296,25 @@ end
 
 local function loadAssets()
 	--Abort if assetTable is empty
-	if not next(assetTable) then
+	if not next(assetTables.assetTable) and not next(assetTables.mkAssetLibraryTable) then
 		DebugLog("No assets to load.")
 		return
 	end
 	
 	local ublgameinstance = UEHelpers:GetGameInstance()
 	
-	--Set assetsPathArray property if this is the first call
-	if ublgameinstance:GetPropertyValue("assetsPathArray"):GetArrayNum() == 0 then
-		DebugLog("Setting assetsPathArray property...")
-		ublgameinstance:SetPropertyValue("assetsPathArray", assetTable)
+	if next(assetTables.assetTable) then
+		--Set assetsPathArray property if this is the first call
+		if ublgameinstance:GetPropertyValue("assetsPathArray"):GetArrayNum() == 0 then
+			DebugLog("Setting assetsPathArray property...")
+			ublgameinstance:SetPropertyValue("assetsPathArray", assetTables.assetTable)
+		end
 	end
-	
-	--Start asset loading
-	ublgameinstance:SetPropertyValue("needsLoading", true)
-	DebugLog("Setting needsLoading property...")
+
+	if next(assetTables.mkAssetLibraryTable) then
+		DebugLog("Setting mkAssetLibraryArray property...")
+		ublgameinstance:SetPropertyValue("mkAssetLibraryArray", assetTables.mkAssetLibraryTable)
+	end
 end
 
 local function registerStuff()

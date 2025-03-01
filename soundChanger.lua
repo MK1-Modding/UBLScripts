@@ -5,13 +5,33 @@ local function changeVoiceOrGrunts(mkAudioComponent, newAkSwitchValue, isVoice)
 		--Perform change based on what needs to be changed
 		if isVoice then
 			mSwitches[1] = newAkSwitchValue
-			DebugLog(string.format("Successfully set the new voice value for: %s to be %s!", mkAudioComponent:GetFName():ToString(), newAkSwitchValue:GetFName():ToString()))
+
+			if newAkSwitchValue ~= FName("None") then
+				DebugLog(string.format("Successfully set the new voice value for: %s to be %s!", mkAudioComponent:GetFName():ToString(), newAkSwitchValue:GetFName():ToString()))
+			else
+				DebugLog(string.format("Successfully set the new voice value for: %s to be 'None'!", mkAudioComponent:GetFName():ToString()))
+			end
 		else
 			mSwitches[2] = newAkSwitchValue
-			DebugLog(string.format("Successfully set the new grunts value for: %s to be %s!", mkAudioComponent:GetFName():ToString(), newAkSwitchValue:GetFName():ToString()))
+
+			if newAkSwitchValue ~= FName("None") then
+				DebugLog(string.format("Successfully set the new grunts value for: %s to be %s!", mkAudioComponent:GetFName():ToString(), newAkSwitchValue:GetFName():ToString()))
+			else
+				DebugLog(string.format("Successfully set the new grunts value for: %s to be 'None'!", mkAudioComponent:GetFName():ToString()))
+			end
 		end
 	end
 end
+
+--[[local function constructVoiceGenVariable(class, template, interceptedBpName)
+	local newVoiceGenVariable = StaticConstructObject(class, UEHelpers:GetGameInstance(), FName(interceptedBpName .. "_Voice_GEN_VARIABLE"), 0, 0, false, false, template)
+
+	if not newVoiceGenVariable:IsValid() then
+		error("[UBL] New Voice_GEN_VARIABLE object is not valid! This should not be happening!\n")
+	end
+
+	return newVoiceGenVariable
+end]]
 
 local function performChange(CDO, soundParams, interceptedBp)
 	local currentCDO = CDO
@@ -35,7 +55,7 @@ local function performChange(CDO, soundParams, interceptedBp)
 				newAkSwitchValue = FindObject("AkSwitchValue", newSound)
 			else
 				DebugLog(string.format("Setting new sound object: %s to None", targetSound))
-				newAkSwitchValue = nil
+				newAkSwitchValue = FName("None")
 			end
 			
 			if newSound ~= "None" and not newAkSwitchValue:IsValid() then
@@ -46,17 +66,26 @@ local function performChange(CDO, soundParams, interceptedBp)
 			
 			--Handle specific sound components
 			if targetSound == "Voice" or targetSound == "Grunts" then
-				local mkAudioComponent = FindObject(mkAudioClass, parentBlueprint, "Voice_GEN_VARIABLE", true)
+				local mkAudioComponentParent = FindObject(mkAudioClass, parentBlueprint, "Voice_GEN_VARIABLE", true)
 				
-				if not mkAudioComponent:IsValid() then
-					error("[UBL] Retrieved mkAudio component: %s is not valid! What???!\n")
+				if not mkAudioComponentParent:IsValid() then
+					error("[UBL] Retrieved parent mkAudio component: %s is not valid! This should not be happening!\n")
 				end
+
+				--[[Create new voice gen variable if it doesn't exist
+				local mkAudioComponentChild = FindObject(mkAudioClass, interceptedBlueprint, "Voice_GEN_VARIABLE", true)
+
+				if not mkAudioComponentChild:IsValid() then
+					DebugLog("Child mkAudioComponent not valid, constructing...")
+					mkAudioComponentChild = constructVoiceGenVariable(mkAudioClass, mkAudioComponentParent, interceptedBlueprint:GetFName():ToString())
+					DebugLog(string.format("New child mkAudioComponent: %s constructed successfully!", mkAudioComponentChild:GetFName():ToString()))
+				end]]
 				
 				--Perform sound change based on voice or grunts
 				if targetSound == "Voice" then
-					changeVoiceOrGrunts(mkAudioComponent, newAkSwitchValue, true)
+					changeVoiceOrGrunts(mkAudioComponentParent, newAkSwitchValue, true)
 				elseif targetSound == "Grunts" then
-					changeVoiceOrGrunts(mkAudioComponent, newAkSwitchValue, false)
+					changeVoiceOrGrunts(mkAudioComponentParent, newAkSwitchValue, false)
 				end
 			end
 		else
@@ -65,87 +94,5 @@ local function performChange(CDO, soundParams, interceptedBp)
 		
 	end
 end
-
-RegisterCustomEvent("ChangeVoice", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamNewVoice)
-	local charName = ParamCharacterName:get()
-	local skinName = ParamSkinName:get()
-	local palName = ParamPaletteName:get()
-	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeVoice")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
-	local newVoice = ParamNewVoice:get()
-	
-	local expectedTypeTable = {
-		charName = "FString",
-		skinName = "FString",
-		palName = "FString",
-		newVoice = "FString"
-	}
-	
-	local providedParams = {
-		charName = charName,
-		skinName = skinName,
-		palName = palName,
-		newVoice = newVoice
-	}
-	
-	ValidateTypes(expectedTypeTable, providedParams)
-	
-	--Adjust charName with skin/pal specifics
-	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
-	
-	--Convert to a standalone table to avoid corruption
-	local passingParameters = {
-		Voice = newVoice:ToString()
-	}
-	
-	--Store character data
-	StoreCharData("ChangeVoice", adjustedCharName, passingParameters)
-end)
-
-RegisterCustomEvent("ChangeGrunts", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamNewGrunts)
-	local charName = ParamCharacterName:get()
-	local skinName = ParamSkinName:get()
-	local palName = ParamPaletteName:get()
-	
-	local isDuplicateEntry = CheckIfDuplicateEntry(charName:ToString(), "ChangeGrunts")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
-	local newGrunts = ParamNewGrunts:get()
-	
-	local expectedTypeTable = {
-		charName = "FString",
-		skinName = "FString",
-		palName = "FString",
-		newGrunts = "FString"
-	}
-	
-	local providedParams = {
-		charName = charName,
-		skinName = skinName,
-		palName = palName,
-		newGrunts = newGrunts
-	}
-	
-	ValidateTypes(expectedTypeTable, providedParams)
-	
-	--Adjust charName with skin/pal specifics
-	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
-	
-	--Convert to a standalone table to avoid corruption
-	local passingParameters = {
-		Grunts = newGrunts:ToString()
-	}
-	
-	--Store character data
-	StoreCharData("ChangeGrunts", adjustedCharName, passingParameters)
-end)
 
 return performChange

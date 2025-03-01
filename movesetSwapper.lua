@@ -27,46 +27,4 @@ local function performMovesetChange(_, params)
     DebugLog("Successful moveset swap!")
 end
 
-RegisterCustomEvent("ChangeMoveset", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamNewMoveset)
-	local charName = ParamCharacterName:get()
-	local skinName = ParamSkinName:get()
-	local palName = ParamPaletteName:get()
-	
-	local newMoveset = ParamNewMoveset:get()
-	
-	local expectedTypeTable = {
-		charName = "FString",
-		skinName = "FString",
-		palName = "FString",
-		newMoveset = "FString"
-	}
-	
-	local providedParams = {
-		charName = charName,
-		skinName = skinName,
-		palName = palName,
-		newMoveset = newMoveset
-	}
-	
-	ValidateTypes(expectedTypeTable, providedParams)
-	
-	--Adjust charName with skin/pal specifics
-	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
-
-	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeMoveset")
-	
-	if (isDuplicateEntry) then
-		return
-	end
-	
-	--Convert to a standalone table to avoid corruption
-	local passingParameters = {
-        Moveset = newMoveset:ToString(),
-        CharName = charName:ToString()
-	}
-	
-	--Store character data
-	StoreCharData("ChangeMoveset", adjustedCharName, passingParameters)
-end)
-
 return performMovesetChange

@@ -1,6 +1,6 @@
 UEHelpers = require("UEHelpers")
 
-local version = "1.0.0"
+local version = "1.0.1"
 
 local debugLogging = true
 local initialSpawnDone = false
@@ -46,6 +46,8 @@ local function initialization()
 				require("bpIntercepter")
 			end
 			
+			UEHelpers:GetGameInstance():SetPropertyValue("debugLogging", debugLogging)
+
 			--Pass detected mods to playerController
 			UBLPlayerController:SetPropertyValue("bpNamesArray", modsTable)
 		end

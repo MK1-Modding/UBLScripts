@@ -1,4 +1,7 @@
-local assetTable = {}
+local assetTables = {
+	assetTable = {},
+	mkAssetLibraryTable = {}
+}
 
 local function isDuplicateAsset(asstTable, element)
 	for _, asset in ipairs(asstTable) do
@@ -11,9 +14,9 @@ local function isDuplicateAsset(asstTable, element)
 	return false
 end
 
-local function populateAssetTable(assetPaths)
+local function populateAssetTable(assetTArray, assetTable)
 	--Populate assetTable
-	assetPaths:ForEach(function(index, elem)
+	assetTArray:ForEach(function(_, elem)
 		if not isDuplicateAsset(assetTable, elem:get()) then
 			table.insert(assetTable, elem:get())
 			--DebugLog(string.format("Inserted element: %s into assetTable.", elem:get():ToString()))
@@ -34,7 +37,23 @@ RegisterCustomEvent("LoadAssets", function(ParamContext, ParamAssetPaths)
 	
 	ValidateTypes(expectedTypeTable, params)
 	
-	populateAssetTable(assetPaths)
+	populateAssetTable(assetPaths, assetTables.assetTable)
 end)
 
-return assetTable
+RegisterCustomEvent("LoadMKAssetLibraries", function(ParamContext, ParamMKAssetLibraries)
+	local mkAssetLibraries = ParamMKAssetLibraries:get()
+	
+	local expectedTypeTable = {
+		mkAssetLibraries = "TArray"
+	}
+	
+	local params = {
+		mkAssetLibraries = mkAssetLibraries
+	}
+	
+	ValidateTypes(expectedTypeTable, params)
+	
+	populateAssetTable(mkAssetLibraries, assetTables.mkAssetLibraryTable)
+end)
+
+return assetTables
