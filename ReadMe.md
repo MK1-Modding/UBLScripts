@@ -8,6 +8,8 @@ This includes the latest version of the UBL lua scripts which may be more up to 
 
 Please install UBL from NexusMods: [UBL Framework](https://www.nexusmods.com/mortalkombat/mods/1138)
 
+## License
+
 Shield: [![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
 
 This work is licensed under a
