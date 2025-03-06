@@ -1,54 +1,3 @@
---[[local function changeSkeletalMesh(meshComponent, newSkeletalMesh)
-	--Retrieve skeletalMesh property
-	local sm = meshComponent:GetPropertyValue("SkeletalMesh")
-	
-	if sm:IsValid() then
-		meshComponent:SetPropertyValue("SkeletalMesh", newSkeletalMesh)
-		
-		if newSkeletalMesh ~= FName("None") then
-			DebugLog(string.format("Successfully set the new skeletalMesh for: %s to be %s!", meshComponent:GetFName():ToString(), newSkeletalMesh:GetFName():ToString()))
-		else
-			DebugLog(string.format("Successfully set the new skeletalMesh for: %s to be 'None'!", meshComponent:GetFName():ToString()))
-		end
-	else
-		error("Retrieved skeletalMesh is not valid!\n")
-	end
-end]]
-
---[[local function changeAnimBlueprint(primaryMeshComponent, animClass)
-	--Retrieve anim class property
-	local animClassProperty = primaryMeshComponent:GetPropertyValue("AnimClass")
-	
-	if animClassProperty:IsValid() then
-		primaryMeshComponent:SetPropertyValue("AnimClass", animClass)
-		
-		if animClass ~= FName("None") then
-			DebugLog(string.format("Successfully set the new anim class for: %s to be %s!", primaryMeshComponent:GetFName():ToString(), animClass:GetFName():ToString()))
-		else
-			DebugLog(string.format("Successfully set the new anim class for: %s to be 'None'!", primaryMeshComponent:GetFName():ToString()))
-		end
-	else
-		error("Retrieved anim class property is not valid!\n")
-	end
-end]]
-
---[[local function changeHavokCloth(havokClothComponent, newHavokClothAsset)
-	--Retrieve ClothAsset property
-	local clothAsset = havokClothComponent:GetPropertyValue("ClothAsset")
-	
-	if clothAsset:IsValid() then
-		havokClothComponent:SetPropertyValue("ClothAsset", newHavokClothAsset)
-		
-		if newHavokClothAsset ~= FName("None") then
-			DebugLog(string.format("Successfully set the new havok cloth asset for: %s to be %s!", havokClothComponent:GetFName():ToString(), newHavokClothAsset:GetFName():ToString()))
-		else
-			DebugLog(string.format("Successfully set the new havok cloth asset for: %s to be 'None'!", havokClothComponent:GetFName():ToString()))
-		end
-	else
-		error("Retrieved cloth asset property is not valid!\n")
-	end
-end]]
-
 local function changeOverrideMaterials(newOverrideMaterialsTable)
 	local newOverrideMats = {}
 
@@ -59,20 +8,30 @@ local function changeOverrideMaterials(newOverrideMaterialsTable)
 		for _, mat in pairs(newOverrideMaterialsTable) do
 			--Check if value of none is provided
 			if mat ~= "None" then
-				local matClass = StaticFindObject("/Script/Engine.MaterialInstanceConstant")
+				local matInstanceClass = StaticFindObject("/Script/Engine.MaterialInstanceConstant")
+				local matClass = StaticFindObject("/Script/Engine.Material")
+
+				if not matInstanceClass:IsValid() then
+					error("Mat Instance class is not valid! This should not be happening!")
+				end
 
 				if not matClass:IsValid() then
 					error("Mat class is not valid! This should not be happening!")
 				end
 
-				local matInstance = FindObject(matClass, nil, mat, true)
+				local foundMaterial = FindObject(matInstanceClass, nil, mat, true)
 
 				--DebugLog(string.format("Mat name: %s, mat full path: %s", matInstance:GetFName():ToString(), matInstance:GetFullName()))
 
-				if not matInstance:IsValid() then
-					print(string.format("Material: %s is not valid! Make sure you are loading it through the loadAssets function beforehand!", mat))
+				if not foundMaterial:IsValid() then
+					--Try for normal mat class
+					foundMaterial = FindObject(matClass, nil, mat, true)
+
+					if not foundMaterial:IsValid() then
+						print(string.format("Material: %s is not valid! Make sure you are loading it through the loadAssets function beforehand!", mat))
+					end
 				else
-					table.insert(newOverrideMats, matInstance)
+					table.insert(newOverrideMats, foundMaterial)
 				end
 			else
 				table.insert(newOverrideMats, FName("None"))
