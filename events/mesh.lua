@@ -165,3 +165,48 @@ RegisterCustomEvent("ChangeCloth", function(ParamContext, ParamCharacterName, Pa
 	--Store character data
 	StoreCharData("ChangeCloth", adjustedCharName, passingParameters)
 end)
+
+RegisterCustomEvent("ChangeHairCloth", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamNewHavokAsset, ParamNewHairClothMesh)
+	local charName = ParamCharacterName:get()
+	local skinName = ParamSkinName:get()
+	local palName = ParamPaletteName:get()
+	
+	local newHavokAsset = ParamNewHavokAsset:get()
+	local newHairClothMesh = ParamNewHairClothMesh:get()
+	
+	local expectedTypeTable = {
+		charName = "FString",
+		skinName = "FString",
+		palName = "FString",
+		newHavokAsset = "FString",
+		newHairClothMesh = "FString"
+	}
+	
+	local providedParams = {
+		charName = charName,
+		skinName = skinName,
+		palName = palName,
+		newHavokAsset = newHavokAsset,
+		newHairClothMesh = newHairClothMesh
+	}
+	
+	ValidateTypes(expectedTypeTable, providedParams)
+	
+	--Adjust charName with skin/pal specifics
+	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ChangeHairCloth")
+	
+	if (isDuplicateEntry) then
+		return
+	end
+	
+	--Convert to a standalone table to avoid corruption
+	local passingParameters = {
+		Hair_HavokCloth = { newHavokAsset:ToString() },
+		Hair_ClothMesh = { newHairClothMesh:ToString() }
+	}
+	
+	--Store character data
+	StoreCharData("ChangeHairCloth", adjustedCharName, passingParameters)
+end)

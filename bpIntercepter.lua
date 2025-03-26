@@ -32,6 +32,10 @@ local eventHandlers = {
 		Event = require("events.mesh"),
 		Handler = require("eventHandler")
 	},
+	ChangeHairCloth = {
+		Event = require("events.mesh"),
+		Handler = require("eventHandler")
+	},
 	ChangeGearMask = {
 		Event = require("events.gear"),
 		Handler = require("gearChanger")
@@ -74,7 +78,11 @@ local eventHandlers = {
 	},
 	ChangeMoveset = {
 		Event = require("events.miscellaneous"),
-		Handler = require("movesetSwapper")
+		Handler = require("eventHandler")
+	},
+	ForceAddonMoveset = {
+		Event = require("events.miscellaneous"),
+		Handler = require("eventHandler")
 	}
 }
 
@@ -317,10 +325,7 @@ local function loadAssets()
 	end
 end
 
-local function registerStuff()
-	loadAssets()
-	
-	--Unregister events that should no longer be registered
+local function unregisterEvents()
 	DebugLog("Unregistering events...")
 	UnregisterCustomEvent("ChangeBlood")
 	
@@ -333,6 +338,8 @@ local function registerStuff()
 	UnregisterCustomEvent("ChangeBody")
 	
 	UnregisterCustomEvent("ChangeCloth")
+
+	UnregisterCustomEvent("ChangeHairCloth")
 
 	UnregisterCustomEvent("ChangeGearMask")
 
@@ -353,6 +360,8 @@ local function registerStuff()
 	UnregisterCustomEvent("ChangeGrunts")
 
 	UnregisterCustomEvent("ChangeMoveset")
+
+	UnregisterCustomEvent("ForceAddonMoveset")
 	
 	UnregisterCustomEvent("LoadAssets")
 	DebugLog("Successfully unregistered all events")
@@ -368,7 +377,10 @@ NotifyOnNewObject("/Script/Engine.BlueprintGeneratedClass", function(intercepted
 	if not patternsCreated then
 		populateBlueprintPatterns()
 
-		registerStuff()
+		loadAssets()
+
+		--Unload events after a reasonable time
+		ExecuteWithDelay(10000, function() unregisterEvents() end)
 	end
 
 	--Basic character blueprint check

@@ -1,46 +1,4 @@
-local function changeOverrideMaterials(newOverrideMaterialsTable)
-	local newOverrideMats = {}
-
-	--Check mats table
-	if #newOverrideMaterialsTable > 0 then
-		DebugLog("Override mats table is not empty, proceed to populate...")
-
-		for _, mat in pairs(newOverrideMaterialsTable) do
-			--Check if value of none is provided
-			if mat ~= "None" then
-				local matInstanceClass = StaticFindObject("/Script/Engine.MaterialInstanceConstant")
-				local matClass = StaticFindObject("/Script/Engine.Material")
-
-				if not matInstanceClass:IsValid() then
-					error("Mat Instance class is not valid! This should not be happening!")
-				end
-
-				if not matClass:IsValid() then
-					error("Mat class is not valid! This should not be happening!")
-				end
-
-				local foundMaterial = FindObject(matInstanceClass, nil, mat, true)
-
-				--DebugLog(string.format("Mat name: %s, mat full path: %s", matInstance:GetFName():ToString(), matInstance:GetFullName()))
-
-				if not foundMaterial:IsValid() then
-					--Try for normal mat class
-					foundMaterial = FindObject(matClass, nil, mat, true)
-
-					if not foundMaterial:IsValid() then
-						print(string.format("Material: %s is not valid! Make sure you are loading it through the loadAssets function beforehand!", mat))
-					end
-				else
-					table.insert(newOverrideMats, foundMaterial)
-				end
-			else
-				table.insert(newOverrideMats, FName("None"))
-			end
-		end
-	end
-
-	return newOverrideMats
-end
+local HelperFunctions = require("helpers.eventHelperFuncs")
 
 local funcTable = {
 	Hair = { "SkeletalMesh" },
@@ -48,15 +6,20 @@ local funcTable = {
 	Body = { "SkeletalMesh" },
 	ClothMesh = { "SkeletalMesh" },
 	HavokCloth = { "ClothAsset" },
+	Hair_ClothMesh = { "SkeletalMesh" },
+	Hair_HavokCloth = { "ClothAsset" },
 	AnimBlueprint = { "AnimClass" },
-	OverrideMats = { "OverrideMaterials", changeOverrideMaterials }
+	OverrideMats = { "OverrideMaterials", HelperFunctions.changeOverrideMaterials },
+	FacialAnims = { "FacialAnims" },
+	Moveset = { "mScriptAsset" },
+	AddonMoveset = { "MovesetScript" }
 }
 
 local function changeProperty(component, newAsset, targetMesh)
 	local targetProperty = funcTable[targetMesh][1]
 	local property = component:GetPropertyValue(targetProperty)
 
-	if property:IsValid() then
+	if property:IsValid() or property == FName("None") then
 		local newPropertyValue
 
 		--Do we need additional handling?
@@ -72,11 +35,15 @@ local function changeProperty(component, newAsset, targetMesh)
 	end
 end
 
-local function performChange(className, newAssetClassName, componentName, alternativeName, newMesh, targetMesh, outer)
-	local class = StaticFindObject(className)
+local function performChange(className, alternativeClassName, newAssetClassName, componentName, alternativeName, newMesh, targetMesh, outer, simpleSearch)
+	local class
+	
+	if className then
+		class = StaticFindObject(className)
 
-	if not class:IsValid() then
-		error(string.format("[UBL] Class: %s is not valid! This should not be happening!\n", className))
+		if not class:IsValid() then
+			error(string.format("[UBL] Class: %s is not valid! This should not be happening!\n", className))
+		end
 	end
 
 	local newAsset
@@ -99,17 +66,57 @@ local function performChange(className, newAssetClassName, componentName, altern
 		newAsset = newMesh
 	end
 
-	local component = FindObject(class, outer, componentName, true)
+	local component
+	
+	--Default to self if no component name provided
+	if componentName then
+		--Simple or advanced search
+		if simpleSearch then
+			component = FindObject(class, componentName)
+		else
+			component = FindObject(class, outer, componentName, true)
+		end
+		
+	else
+		component = outer
+	end
 
 	if not component:IsValid() then
-		if alternativeName then
-			DebugLog(string.format("[UBL] Retrieved component: %s is not valid! Checking for alternative naming (Thanks NRS)...\n", componentName))
+		local altClass
 
-			component = FindObject(class, outer, alternativeName, true)
+		--First, check for alt class name
+		if alternativeClassName then
+			DebugLog(string.format("[UBL] Retrieved component: %s is not valid! Trying alternative class name...\n", componentName))
+			altClass = StaticFindObject(alternativeClassName)
+
+			if not altClass:IsValid() then
+				error(string.format("[UBL] Class: %s is not valid! This should not be happening!\n", alternativeClassName))
+			end
+
+			component = FindObject(altClass, outer, componentName, true)
+		end
+
+		--Then for alt name of the component itself
+		if not component:IsValid() then
+			if alternativeName then
+				DebugLog(string.format("[UBL] Retrieved component: %s is not valid! Checking for alternative naming (Thanks NRS)...\n", componentName))
+	
+				component = FindObject(class, outer, alternativeName, true)
+			end
+		end
+
+		--Final check (alt comp name and alt class name)
+		if not component:IsValid() then
+			if alternativeClassName and alternativeName then
+				DebugLog(string.format("[UBL] Retrieved component: %s is not valid! Doing final check...\n", alternativeName))
+
+				DebugLog(string.format("alt class: %s", altClass:GetFName():ToString()))
+				component = FindObject(altClass, outer, alternativeName, true)
+			end
 		end
 
 		if not component:IsValid() then
-			error(string.format("[UBL] Retrieved component: %s is not valid! This should not be happening!\n", componentName))
+			error(string.format("[UBL] Retrieved component: %s is not valid! This should not be happening!\n", alternativeName))
 		end
 	end
 
@@ -117,21 +124,6 @@ local function performChange(className, newAssetClassName, componentName, altern
 
 	--Perform actual change
 	changeProperty(component, newAsset, targetMesh)
-end
-
-local function performFacialAnimsChange(newFacialAnims, CDO)
-	local newFacialAnimsAsset = FindObject("MKAssetLibrary", newFacialAnims)
-
-	if not newFacialAnimsAsset:IsValid() then
-		print(string.format("[UBL] Provided new facial anims asset: %s is not valid! Make sure you are loading it through the LoadAssets function first!\n", newFacialAnims))
-	end
-
-	local currentFacialAnims = CDO:GetPropertyValue("FacialAnims")
-
-	if currentFacialAnims:IsValid() then
-		CDO:SetPropertyValue("FacialAnims", newFacialAnimsAsset)
-		DebugLog(string.format("Successfully set new facial anims asset to: %s!", newFacialAnimsAsset:GetFName():ToString()))
-	end
 end
 
 local function handleEvents(CDO, meshParams, interceptedBp)
@@ -167,6 +159,7 @@ local function handleEvents(CDO, meshParams, interceptedBp)
 			performChange(
 						componentClass,
 						nil,
+						nil,
 						componentName,
 						alternativeName,
 						overrideMatsTable,
@@ -176,6 +169,7 @@ local function handleEvents(CDO, meshParams, interceptedBp)
 		elseif targetMesh == "AnimBlueprint" then
 			performChange(
 						"/Script/HierarchicalAnimation.HierarchicalSkeletalMeshComponent",
+						nil,
 						"AnimBlueprintGeneratedClass",
 						"PrimaryMeshComponent",
 						nil,
@@ -186,6 +180,7 @@ local function handleEvents(CDO, meshParams, interceptedBp)
 		elseif targetMesh == "HavokCloth" then
 			performChange(
 						"/Script/Dismemberment.DismembermentHavokClothComponent",
+						nil,
 						"HavokClothAsset",
 						"DismembermentHavokCloth_GEN_VARIABLE",
 						nil,
@@ -196,6 +191,7 @@ local function handleEvents(CDO, meshParams, interceptedBp)
 		elseif targetMesh == "ClothMesh" then
 			performChange(
 						"/Script/Engine.SkeletalMeshComponent",
+						"/Script/HierarchicalAnimation.HierarchicalSkeletalMeshComponent",
 						"SkeletalMesh",
 						"ClothMesh_GEN_VARIABLE",
 						"Cloth Mesh_GEN_VARIABLE",
@@ -203,8 +199,58 @@ local function handleEvents(CDO, meshParams, interceptedBp)
 						targetMesh,
 						interceptedBlueprint
 					)
+		elseif targetMesh == "Hair_HavokCloth" then
+			performChange(
+				"/Script/Dismemberment.DismembermentHavokClothComponent",
+				nil,
+				"HavokClothAsset",
+				"Hair DismembermentHavokCloth_GEN_VARIABLE",
+				nil,
+				newMesh,
+				targetMesh,
+				interceptedBlueprint
+			)
+		elseif targetMesh == "Hair_ClothMesh" then
+			performChange(
+				"/Script/Engine.SkeletalMeshComponent",
+				nil,
+				"SkeletalMesh",
+				"Hair ClothMesh_GEN_VARIABLE",
+				"HairClothMesh_GEN_VARIABLE",
+				newMesh,
+				targetMesh,
+				interceptedBlueprint
+			)
 		elseif targetMesh == "FacialAnims" then
-			performFacialAnimsChange(newMesh, currentCDO)
+			performChange(
+						nil,
+						nil,
+						"MKAssetLibrary",
+						nil,
+						nil,
+						newMesh,
+						targetMesh,
+						currentCDO
+					)
+		elseif targetMesh == "Moveset" then
+			local charName = newMeshTable[2]
+
+			performChange(
+						"/Script/MK12.CharacterContentDefinition",
+						nil,
+						"MKScriptAsset",
+						charName,
+						nil,
+						newMesh,
+						targetMesh,
+						nil,
+						true
+					)
+		elseif targetMesh == "AddonMoveset" then
+			local charName = newMeshTable[2]
+			local addonMovesetTable = newMeshTable[1]
+
+			HelperFunctions.addAddonMovesetCompatibility(charName, addonMovesetTable)
 		else
 			local componentName
 			local outer = interceptedBlueprint
@@ -220,6 +266,7 @@ local function handleEvents(CDO, meshParams, interceptedBp)
 
 			performChange(
 						"/Script/HierarchicalAnimation.HierarchicalSkeletalMeshComponent",
+						nil,
 						"SkeletalMesh",
 						componentName,
 						nil,

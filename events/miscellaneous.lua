@@ -1,6 +1,6 @@
 local function constructBloodAsset(passedParams, charName)
 	local class = StaticFindObject("/Script/MK12.BloodPropertiesDataAsset")
-	local newBloodAsset = StaticConstructObject(class, UEHelpers:GetGameInstance(), FName(charName .. "_newBlood"), 0, 0, false, false, nil)
+	local newBloodAsset = StaticConstructObject(class, UEHelpers:GetGameInstance(), FName(charName .. "_newBlood"))
 	
 	if not newBloodAsset then
 		error("Failed to construct new blood asset!\n")
@@ -193,10 +193,57 @@ RegisterCustomEvent("ChangeMoveset", function(ParamContext, ParamCharacterName, 
 	
 	--Convert to a standalone table to avoid corruption
 	local passingParameters = {
-        Moveset = newMoveset:ToString(),
-        CharName = charName:ToString()
+        Moveset = { newMoveset:ToString(), charName:ToString() }
 	}
 	
 	--Store character data
 	StoreCharData("ChangeMoveset", adjustedCharName, passingParameters)
+end)
+
+RegisterCustomEvent("ForceAddonMoveset", function(ParamContext, ParamCharacterName, ParamSkinName, ParamPaletteName, ParamAddonMoveset)
+	local charName = ParamCharacterName:get()
+	local skinName = ParamSkinName:get()
+	local palName = ParamPaletteName:get()
+	
+	local addonMovesetStruct = ParamAddonMoveset:get()
+	
+	local expectedTypeTable = {
+		charName = "FString",
+		skinName = "FString",
+		palName = "FString",
+		addonMovesetStruct = "UScriptStruct"
+	}
+	
+	local providedParams = {
+		charName = charName,
+		skinName = skinName,
+		palName = palName,
+		addonMovesetStruct = addonMovesetStruct
+	}
+	
+	ValidateTypes(expectedTypeTable, providedParams)
+	
+	--Adjust charName with skin/pal specifics
+	local adjustedCharName = AdjustCharName(charName:ToString(), skinName:ToString(), palName:ToString())
+
+	local isDuplicateEntry = CheckIfDuplicateEntry(adjustedCharName, "ForceAddonMoveset")
+	
+	if (isDuplicateEntry) then
+		return
+	end
+
+	--Copy fields safely to a table
+	local addonMovesetTable = {
+		Mid = addonMovesetStruct.Mid,
+		mMoveset = addonMovesetStruct.mMoveset,
+		mSkin = addonMovesetStruct.mSkin
+	}
+	
+	--Convert to a standalone table to avoid corruption
+	local passingParameters = {
+        AddonMoveset = { addonMovesetTable, charName:ToString() }
+	}
+	
+	--Store character data
+	StoreCharData("ForceAddonMoveset", adjustedCharName, passingParameters)
 end)
